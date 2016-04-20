@@ -100,8 +100,8 @@ resource "google_compute_instance" "staging_master{{instance.number}}" {
   }
 
   provisioner "file" {
-    source = "master/assets/kube-apiserver.service"
-    destination = "/etc/systemd/system/kube-apiserver.service"
+    source = "master/assets/kube-apiserver.yaml"
+    destination = "/etc/kubernetes/manifests/kube-apiserver.yaml"
   }
 
   provisioner "file" {

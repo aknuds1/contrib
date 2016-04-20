@@ -64,35 +64,58 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 """)
-write_asset('kube-apiserver.service', """[Service]
-ExecStart=/usr/bin/docker run \\
--p 443:443 \\
--v /etc/kubernetes:/etc/kubernetes:ro \\
--v /etc/kubernetes/ssl:/etc/ssl/etcd:ro \\
-gcr.io/google_containers/hyperkube:v1.1.2 \\
-/hyperkube apiserver \\
---cloud-provider=gce \\
---bind-address=0.0.0.0 \\
---insecure-bind-address=127.0.0.1 \\
---runtime-config=extensions/v1beta1/deployments=true \\
---etcd-config=/etc/kubernetes/etcd.client.conf \\
---allow-privileged=true \\
---service-cluster-ip-range=10.3.0.0/24 \\
---secure-port=443 \\
---advertise-address=0.0.0.0 \\
---admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,\
-SecurityContextDeny,ServiceAccount,ResourceQuota \\
---kubelet-certificate-authority=/etc/ssl/etcd/ca.pem \\
---kubelet-client-certificate=/etc/ssl/etcd/master-client.pem \\
---kubelet-client-key=/etc/ssl/etcd/master-client-key.pem \\
---client-ca-file=/etc/ssl/etcd/ca.pem \\
---tls-cert-file=/etc/ssl/etcd/master-client.pem \\
---tls-private-key-file=/etc/ssl/etcd/master-client-key.pem
-Restart=always
-RestartSec=10
-[Install]
-WantedBy=multi-user.target
-""")
+write_asset('kube-apiserver.yaml', """apiVersion: v1
+kind: Pod
+metadata:
+  name: kube-apiserver
+  namespace: kube-system
+spec:
+  hostNetwork: true
+  containers:
+  - name: kube-apiserver
+    image: quay.io/coreos/hyperkube:v1.2.2_coreos.0
+    command:
+    - /hyperkube
+    - apiserver
+    - --cloud-provider=gce
+    - --etcd-servers={0}
+    - --bind-address=0.0.0.0
+    - --insecure-bind-address=127.0.0.1
+    - --runtime-config=extensions/v1beta1/deployments=true
+    - --allow-privileged=true
+    - --service-cluster-ip-range=10.3.0.0/24
+    - --secure-port=443
+    - --advertise-address=0.0.0.0
+    - --admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,\
+SecurityContextDeny,ServiceAccount,ResourceQuota
+    - --kubelet-certificate-authority=/etc/ssl/etcd/ca.pem
+    - --kubelet-client-certificate=/etc/ssl/etcd/master-client.pem
+    - --kubelet-client-key=/etc/ssl/etcd/master-client-key.pem
+    - --client-ca-file=/etc/ssl/etcd/ca.pem
+    - --tls-cert-file=/etc/ssl/etcd/master-client.pem
+    - --tls-private-key-file=/etc/ssl/etcd/master-client-key.pem
+    ports:
+    - containerPort: 443
+      hostPort: 443
+      name: https
+    - containerPort: 8080
+      hostPort: 8080
+      name: local
+    volumeMounts:
+    - mountPath: /etc/kubernetes/ssl
+      name: ssl-certs-kubernetes
+      readOnly: true
+    - mountPath: /etc/ssl/certs
+      name: ssl-certs-host
+      readOnly: true
+  volumes:
+  - hostPath:
+      path: /etc/kubernetes/ssl
+    name: ssl-certs-kubernetes
+  - hostPath:
+      path: /usr/share/ca-certificates
+    name: ssl-certs-host
+""".format(etcd_endpoints_str,))
 write_asset('kube-proxy.yaml', """apiVersion: v1
 kind: Pod
 metadata:
