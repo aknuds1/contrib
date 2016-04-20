@@ -47,6 +47,18 @@ resource "google_compute_firewall" "master_https" {
   }
 }
 
+resource "google_compute_firewall" "master_loadbalancer" {
+  name = "kubernetes-master-loadbalancer"
+  network = "default"
+  target_tags = ["master"]
+  source_ranges = ["0.0.0.0/0"]
+
+  allow {
+    protocol = "tcp"
+    ports = ["30748"]
+  }
+}
+
 {% for instance in master_instances %}
 resource "google_compute_instance" "staging_master{{instance.number}}" {
   name = "staging-master{{instance.number}}"
@@ -217,6 +229,11 @@ resource "google_compute_instance" "staging_master{{instance.number}}" {
 
   provisioner "file" {
     source = "master/addons/dashboard/"
+    destination = "/tmp/"
+  }
+
+  provisioner "file" {
+    source = "master/addons/loadbalancing/"
     destination = "/tmp/"
   }
 
