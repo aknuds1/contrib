@@ -78,7 +78,7 @@ spec:
     - /hyperkube
     - apiserver
     - --cloud-provider=gce
-    - --etcd-servers={0}
+    - --etcd-servers=https://127.0.0.1:2379
     - --bind-address=0.0.0.0
     - --insecure-bind-address=127.0.0.1
     - --runtime-config=extensions/v1beta1/deployments=true
@@ -86,12 +86,12 @@ spec:
     - --service-cluster-ip-range=10.3.0.0/24
     - --secure-port=443
     - --advertise-address=0.0.0.0
-    - --admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,\
-SecurityContextDeny,ServiceAccount,ResourceQuota
+    - --admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota
     - --kubelet-certificate-authority=/etc/ssl/etcd/ca.pem
     - --kubelet-client-certificate=/etc/ssl/etcd/master-client.pem
     - --kubelet-client-key=/etc/ssl/etcd/master-client-key.pem
     - --client-ca-file=/etc/ssl/etcd/ca.pem
+    - --etcd-cafile=/etc/ssl/etcd/ca.pem
     - --tls-cert-file=/etc/ssl/etcd/master-client.pem
     - --tls-private-key-file=/etc/ssl/etcd/master-client-key.pem
     ports:
@@ -105,7 +105,7 @@ SecurityContextDeny,ServiceAccount,ResourceQuota
     - mountPath: /etc/kubernetes/ssl
       name: ssl-certs-kubernetes
       readOnly: true
-    - mountPath: /etc/ssl/certs
+    - mountPath: /etc/ssl/etcd
       name: ssl-certs-host
       readOnly: true
   volumes:
@@ -113,7 +113,7 @@ SecurityContextDeny,ServiceAccount,ResourceQuota
       path: /etc/kubernetes/ssl
     name: ssl-certs-kubernetes
   - hostPath:
-      path: /usr/share/ca-certificates
+      path: /etc/ssl/etcd
     name: ssl-certs-host
 """.format(etcd_endpoints_str,))
 write_asset('kube-proxy.yaml', """apiVersion: v1

@@ -22,7 +22,7 @@ with file('master.json', 'wt') as f:
   "hosts": [
     "{0}",
     "{1}",
-    "staging-master",
+    "staging-master1",
     "10.3.0.1",
     "127.0.0.1",
     "localhost"

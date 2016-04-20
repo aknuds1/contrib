@@ -9,6 +9,4 @@ mkdir -p /home/core/.kube && \
 ln -s /etc/kubernetes/kube.conf /home/core/.kube/config && \
 sudo systemctl daemon-reload && \
 sudo systemctl enable kubelet && \
-sudo systemctl start kubelet && \
-sudo systemctl enable kube-apiserver && \
-sudo systemctl start kube-apiserver
+sudo systemctl start kubelet
