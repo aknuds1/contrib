@@ -42,6 +42,8 @@ subprocess.check_call([
 
 write_instance_env(is_master=True)
 
+hyperkube_image = 'quay.io/coreos/hyperkube:v1.2.2_coreos.0'
+
 # TODO: Allow for several masters
 etcd_endpoints = ['https://staging-master1:2379']
 etcd_endpoints_str = ','.join(etcd_endpoints)
@@ -73,7 +75,7 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-apiserver
-    image: quay.io/coreos/hyperkube:v1.2.2_coreos.0
+    image: {0}
     command:
     - /hyperkube
     - apiserver
@@ -115,7 +117,7 @@ spec:
   - hostPath:
       path: /etc/ssl/etcd
     name: ssl-certs-host
-""".format(etcd_endpoints_str,))
+""".format(hyperkube_image,))
 write_asset('kube-proxy.yaml', """apiVersion: v1
 kind: Pod
 metadata:
@@ -125,7 +127,7 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-proxy
-    image: gcr.io/google_containers/hyperkube:v1.1.2
+    image: {0}
     command:
     - /hyperkube
     - proxy
@@ -155,7 +157,8 @@ spec:
   - hostPath:
       path: /etc/kubernetes/ssl
     name: kubernetes-certs
-""")
+""".format(hyperkube_image))
+# XXX: Is this still needed? Can't see in CoreOS docs
 write_asset('kube-podmaster.yaml', """apiVersion: v1
 kind: Pod
 metadata:
@@ -230,7 +233,7 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-controller-manager
-    image: gcr.io/google_containers/hyperkube:v1.1.2
+    image: {0}
     command:
     - /hyperkube
     - controller-manager
@@ -271,7 +274,7 @@ master-client-key.pem
   - hostPath:
       path: /usr/share/ca-certificates
     name: ssl-certs-host
-""")
+""".format(hyperkube_image))
 write_asset('kube-scheduler.yaml', """apiVersion: v1
 kind: Pod
 metadata:
@@ -281,7 +284,7 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-scheduler
-    image: gcr.io/google_containers/hyperkube:v1.1.2
+    image: {0}
     command:
     - /hyperkube
     - scheduler
@@ -307,7 +310,7 @@ spec:
   - hostPath:
       path: /etc/kubernetes/ssl
     name: etcd-certs
-""")
+""".format(hyperkube_image))
 write_asset('etcd.client.conf', """{{
   "cluster": {{
     "machines": [ {0} ]
